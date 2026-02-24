@@ -28,3 +28,4 @@ python-docx==1.2.0
 python-multipart==0.0.22
 elevenlabs==2.36.1
 httpx==0.28.1
+itsdangerous==2.2.0
