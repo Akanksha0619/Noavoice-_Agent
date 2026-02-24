@@ -10,7 +10,7 @@ from app.schemas.assistant_schema import (
 )
 from app.services.assistant_service import AssistantService
 
-router = APIRouter(prefix="/assistants", tags=["Assistants"])
+router = APIRouter(prefix="/agents", tags=["Agents"])
 
 
 # CREATE Assistant
@@ -19,7 +19,7 @@ router = APIRouter(prefix="/assistants", tags=["Assistants"])
     response_model=AssistantResponse,
     status_code=status.HTTP_201_CREATED
 )
-async def create_assistant(
+async def create_agent(
     payload: AssistantCreate,
     db: AsyncSession = Depends(get_db),
 ):
@@ -34,7 +34,7 @@ async def create_assistant(
     "/",
     response_model=List[AssistantResponse]
 )
-async def get_all_assistants(
+async def list_agents(
     db: AsyncSession = Depends(get_db),
 ):
     return await AssistantService.get_all_assistants(db)
@@ -42,14 +42,14 @@ async def get_all_assistants(
 
 # GET Assistant by ID
 @router.get(
-    "/{assistant_id}",
+    "/{agent_id}",
     response_model=AssistantResponse
 )
-async def get_assistant(
-    assistant_id: UUID,
+async def get_agent(
+    agent_id: UUID,
     db: AsyncSession = Depends(get_db),
 ):
-    assistant = await AssistantService.get_assistant(db, assistant_id)
+    assistant = await AssistantService.get_assistant(db, agent_id)
 
     if not assistant:
         raise HTTPException(
@@ -62,17 +62,17 @@ async def get_assistant(
 
 # UPDATE Assistant
 @router.put(
-    "/{assistant_id}",
+    "/{agent_id}",
     response_model=AssistantResponse
 )
-async def update_assistant(
-    assistant_id: UUID,
+async def update_agent(
+    agent_id: UUID,
     payload: AssistantCreate,
     db: AsyncSession = Depends(get_db),
 ):
     updated = await AssistantService.update_assistant(
         db=db,
-        assistant_id=assistant_id,
+        assistant_id=agent_id,
         data=payload.model_dump()
     )
 
@@ -87,14 +87,14 @@ async def update_assistant(
 
 # DELETE Assistant
 @router.delete(
-    "/{assistant_id}",
+    "/{agent_id}",
     status_code=status.HTTP_200_OK
 )
-async def delete_assistant(
-    assistant_id: UUID,
+async def delete_agent(
+    agent_id: UUID,
     db: AsyncSession = Depends(get_db),
 ):
-    deleted = await AssistantService.delete_assistant(db, assistant_id)
+    deleted = await AssistantService.delete_assistant(db, agent_id)
 
     if not deleted:
         raise HTTPException(

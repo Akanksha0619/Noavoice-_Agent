@@ -11,13 +11,13 @@ from fastapi.responses import JSONResponse
 router = APIRouter(prefix="/auth", tags=["OAuth Auth"])
 
 
-@router.get("/login/google")
+@router.get("/google")
 async def google_login(request: Request):
     redirect_uri = request.url_for("google_callback")
     return await oauth.google.authorize_redirect(request, redirect_uri)
 
 
-@router.get("/callback/google")
+@router.get("/google/callback")
 async def google_callback(
     request: Request,
     db: AsyncSession = Depends(get_db)
@@ -47,7 +47,7 @@ async def google_callback(
         await db.commit()
         await db.refresh(user)
 
-    # ⭐ STEP 3: HIT GET ALL ASSISTANTS API
+    
     base_url = str(request.base_url).rstrip("/")
 
     async with httpx.AsyncClient() as client:

@@ -1,26 +1,47 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, delete
 from app.models.knowledge import Knowledge
+from app.services.embedding_service import EmbeddingService
+from app.services.chunking_service import ChunkingService
 
 
 class KnowledgeRepository:
 
-    # ✅ CREATE GLOBAL KNOWLEDGE
     @staticmethod
-    async def create(db: AsyncSession, data: dict):
-        knowledge = Knowledge(**data)
-        db.add(knowledge)
-        await db.commit()
-        await db.refresh(knowledge)
-        return knowledge
+    async def create(db, data: dict):
+        content = data.get("content")
+        file_name = data.get("file_name")
+        file_type = data.get("file_type")
 
-    # 🌍 GET ALL GLOBAL KNOWLEDGE
+        # 🔥 STEP 1: Split file into chunks (REAL RAG FIX)
+        chunks = ChunkingService.chunk_text(content)
+
+        saved_records = []
+
+        for chunk in chunks:
+            # 🔥 STEP 2: Create embedding per chunk
+            embedding = EmbeddingService.get_embedding(chunk)
+
+            knowledge = Knowledge(
+                file_name=file_name,
+                file_type=file_type,
+                content=chunk,  # store chunk instead of full document
+                embedding=embedding
+            )
+
+            db.add(knowledge)
+            saved_records.append(knowledge)
+
+        await db.commit()
+
+        # return first record (for API response)
+        return saved_records[0] if saved_records else None
+
     @staticmethod
     async def get_all(db: AsyncSession):
         result = await db.execute(select(Knowledge))
         return result.scalars().all()
 
-    # 🗑️ DELETE SINGLE DOCUMENT
     @staticmethod
     async def delete_by_id(db: AsyncSession, knowledge_id: str):
         result = await db.execute(
@@ -29,7 +50,6 @@ class KnowledgeRepository:
         await db.commit()
         return result.rowcount > 0
 
-    # 🔥 DELETE ALL KNOWLEDGE (GLOBAL RESET)
     @staticmethod
     async def delete_all(db: AsyncSession):
         result = await db.execute(delete(Knowledge))

@@ -5,6 +5,16 @@ class Settings(BaseSettings):
     # App
     APP_NAME: str = "NoaVoiceAI"
     DEBUG: bool = False
+
+     # Existing configs
+    DATABASE_URL: str
+
+    # 🔥 ADD THIS (VERY IMPORTANT)
+    OPENAI_API_KEY: str | None = None
+
+    class Config:
+        env_file = ".env"
+        extra = "ignore"  # 🔥 THIS LINE FIXES YOUR CRASH
     
     # Cal.com V2
     CALCOM_API_KEY: str

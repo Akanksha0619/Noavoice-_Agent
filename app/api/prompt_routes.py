@@ -9,30 +9,30 @@ from app.schemas.assistant_prompt_schema import (
 )
 from app.services.assistant_service import AssistantService
 
-router = APIRouter(prefix="/assistants", tags=["Assistant Prompt"])
+router = APIRouter(prefix="/agents", tags=["Assistant Prompt"])
 
 
 # CREATE / UPDATE Prompt
 @router.post(
-    "/{assistant_id}/prompt",
+    "/{agent_id}/prompt",
     response_model=AssistantPromptResponse,
     status_code=status.HTTP_200_OK,
 )
 async def create_or_update_prompt(
-    assistant_id: UUID,
+    agent_id: UUID,
     data: AssistantPromptCreate,
     db: AsyncSession = Depends(get_db),
 ):
     assistant = await AssistantService.set_prompt(
         db=db,
-        assistant_id=assistant_id,
+        assistant_id=agent_id,
         data=data.model_dump(),
     )
 
     if not assistant:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Assistant not found",
+            detail="Agent not found",
         )
 
     return AssistantPromptResponse(
@@ -45,19 +45,19 @@ async def create_or_update_prompt(
 
 # GET Prompt
 @router.get(
-    "/{assistant_id}/prompt",
+    "/{agent_id}/prompt",
     response_model=AssistantPromptResponse,
 )
 async def get_prompt(
-    assistant_id: UUID,
+    agent_id: UUID,
     db: AsyncSession = Depends(get_db),
 ):
-    assistant = await AssistantService.get_assistant(db, assistant_id)
+    assistant = await AssistantService.get_assistant(db, agent_id)
 
     if not assistant:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Assistant not found",
+            detail="Agent not found",
         )
 
     return AssistantPromptResponse(
@@ -70,22 +70,22 @@ async def get_prompt(
 
 # DELETE Prompt (Reset Prompt)
 @router.delete(
-    "/{assistant_id}/prompt",
+    "/{agent_id}/prompt",
     status_code=status.HTTP_200_OK,
 )
 async def delete_prompt(
-    assistant_id: UUID,
+    agent_id: UUID,
     db: AsyncSession = Depends(get_db),
 ):
     assistant = await AssistantService.delete_prompt(
         db=db,
-        assistant_id=assistant_id,
+        assistant_id=agent_id,
     )
 
     if not assistant:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Assistant not found",
+            detail="Agent not found",
         )
 
     return {"message": "Prompt reset successfully"}
