@@ -30,3 +30,4 @@ elevenlabs==2.36.1
 httpx==0.28.1
 itsdangerous==2.2.0
 sentence-transformers==2.7.0
+PYTHON_VERSION=3.11.9
