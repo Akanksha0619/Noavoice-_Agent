@@ -21,7 +21,7 @@ class Knowledge(Base):
     content = Column(Text, nullable=False)
 
    
-    embedding = Column(Vector(384), nullable=True)
+    embedding = Column(Vector(1536))  
 
     created_at = Column(
         DateTime(timezone=True),
