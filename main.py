@@ -11,10 +11,12 @@ from app.models.base import Base
 
 app = FastAPI(title="NoaVoice Assistant API")
 
+# Session middleware (for Google OAuth)
 app.add_middleware(
     SessionMiddleware,
-    secret_key=settings.SECRET_KEY  
+    secret_key=settings.SECRET_KEY
 )
+
 
 @app.get("/")
 async def root():
@@ -25,16 +27,9 @@ async def on_startup():
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 
-@app.on_event("startup")
-async def on_startup():
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
-
+# Routers
 app.include_router(assistant_router)
 app.include_router(assistant_prompt_router)
-app.include_router(knowledge_router) 
+app.include_router(knowledge_router)
 app.include_router(configure_router)
 app.include_router(auth_router)
-
-
-
