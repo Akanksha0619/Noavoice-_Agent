@@ -1,20 +1,24 @@
-from sentence_transformers import SentenceTransformer
-from typing import List
+from openai import OpenAI
+from app.config.settings import settings
+
+# Initialize OpenAI client
+client = OpenAI(api_key=settings.OPENAI_API_KEY)
 
 
 class EmbeddingService:
     """
-    Convert text into vector embeddings for RAG
+    Production-safe embedding service for RAG
+    Works on Render (no heavy ML models)
     """
-    model = SentenceTransformer("all-MiniLM-L6-v2")
 
     @staticmethod
-    def get_embedding(text: str) -> List[float]:
-        """
-        Generate embedding for a single text
-        """
+    def get_embedding(text: str) -> list:
         if not text:
-            return None
-        embedding = EmbeddingService.model.encode(text)
-        return embedding.tolist()
-    
+            return []
+
+        response = client.embeddings.create(
+            model="text-embedding-3-small",
+            input=text
+        )
+
+        return response.data[0].embedding
