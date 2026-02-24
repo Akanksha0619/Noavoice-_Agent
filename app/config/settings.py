@@ -17,8 +17,8 @@ class Settings(BaseSettings):
         extra = "ignore"  # 🔥 THIS LINE FIXES YOUR CRASH
     
     # Cal.com V2
-    CALCOM_API_KEY: str
-    CALCOM_EVENT_TYPE_ID: int
+    CALCOM_API_KEY: str | None = None 
+    CALCOM_EVENT_TYPE_ID: int | None = None 
     CALCOM_BASE_URL: str = "https://api.cal.com/v2"
     CALCOM_API_VERSION: str = "2024-08-13"
     
