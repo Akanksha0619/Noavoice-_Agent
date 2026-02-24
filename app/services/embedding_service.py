@@ -1,14 +1,13 @@
 from openai import OpenAI
 from app.config.settings import settings
 
-# Initialize OpenAI client
 client = OpenAI(api_key=settings.OPENAI_API_KEY)
 
 
 class EmbeddingService:
     """
-    Production-safe embedding service for RAG
-    Works on Render (no heavy ML models)
+    Lightweight embeddings for RAG (Cloud Safe)
+    No torch, no sentence-transformers
     """
 
     @staticmethod

@@ -10,7 +10,7 @@ class Settings(BaseSettings):
     DATABASE_URL: str
 
     # 🔥 ADD THIS (VERY IMPORTANT)
-    OPENAI_API_KEY: str | None = None
+    OPENAI_API_KEY: str 
 
     class Config:
         env_file = ".env"
