@@ -10,9 +10,11 @@ from app.config.database import get_db
 router = APIRouter(prefix="/auth", tags=["OAuth Auth"])
 
 
+from app.config.settings import settings
+
 @router.get("/google")
 async def google_login(request: Request):
-    redirect_uri = "http://127.0.0.1:8000/auth/google/callback"
+    redirect_uri = settings.GOOGLE_REDIRECT_URI
     return await oauth.google.authorize_redirect(request, redirect_uri)
 
 
