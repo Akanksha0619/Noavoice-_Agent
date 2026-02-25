@@ -28,8 +28,8 @@ async def on_startup():
         await conn.run_sync(Base.metadata.create_all)
 
 # Routers
-app.include_router(auth_router)          # ❌ NO AUTH (public login)
-app.include_router(assistant_router)     # 🔐 Protected
-app.include_router(assistant_prompt_router)  # 🔐 Protected
-app.include_router(knowledge_router)     # 🔐 Protected
-app.include_router(configure_router)     # 🔐 Protected
+app.include_router(auth_router)          
+app.include_router(assistant_router)     
+app.include_router(assistant_prompt_router)  
+app.include_router(knowledge_router)     
+app.include_router(configure_router)     

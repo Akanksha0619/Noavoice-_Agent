@@ -8,13 +8,13 @@ from app.schemas.assistant_prompt_schema import (
     AssistantPromptResponse,
 )
 from app.services.assistant_service import AssistantService
-from app.services.auth import get_current_user  # 🔐 ADD THIS
+from app.services.auth import get_current_user  
 
-# 🔐 Protect ALL prompt routes with JWT
+
 router = APIRouter(
     prefix="/agents",
     tags=["Assistant Prompt"],
-    dependencies=[Depends(get_current_user)]  # 🔐 FULL AUTHORIZATION
+    dependencies=[Depends(get_current_user)]  
 )
 
 

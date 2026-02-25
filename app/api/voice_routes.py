@@ -8,13 +8,13 @@ from app.schemas.voice_schema import (
     AssistantConfigureCreate,
     AssistantConfigureResponse,
 )
-from app.services.auth import get_current_user  # 🔐 ADD THIS
+from app.services.auth import get_current_user  
 
-# 🔐 Protect ALL configure routes with JWT
+
 router = APIRouter(
     prefix="/assistants",
     tags=["Assistant Configure"],
-    dependencies=[Depends(get_current_user)]  # 🔐 FULL AUTHORIZATION
+    dependencies=[Depends(get_current_user)]  
 )
 
 

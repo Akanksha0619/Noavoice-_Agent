@@ -15,7 +15,7 @@ from app.config.settings import settings
 
 @router.get("/google")
 async def google_login(request: Request):
-    redirect_uri = "http://127.0.0.1:8000/auth/google/callback"
+    redirect_uri = "https://noavoice-agent.onrender.com/auth/google/callback"
     return await oauth.google.authorize_redirect(request, redirect_uri)
 
 
