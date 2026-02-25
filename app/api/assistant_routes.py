@@ -2,7 +2,6 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from uuid import UUID
 from typing import List
-
 from app.config.database import get_db
 from app.schemas.assistant_schema import (
     AssistantCreate,

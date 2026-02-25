@@ -10,13 +10,12 @@ from app.repository.knowledge_repository import KnowledgeRepository
 from app.schemas.knowledge_schema import KnowledgeResponse
 from app.services.file_parser_service import FileParserService
 from app.services.llm_service import LLMService
-from app.services.auth import get_current_user  # 🔐 ADD THIS
+from app.services.auth import get_current_user  
 
-# 🔐 Protect ALL knowledge routes with JWT
 router = APIRouter(
     prefix="/knowledge",
     tags=["Global Knowledge Base"],
-    dependencies=[Depends(get_current_user)]  # 🔐 FULL AUTHORIZATION
+    dependencies=[Depends(get_current_user)]  
 )
 
 UPLOAD_DIR = "uploads"
