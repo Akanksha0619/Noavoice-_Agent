@@ -3,13 +3,21 @@ import shutil
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List
+
 from app.services.rag_service import RAGService
 from app.config.database import get_db
 from app.repository.knowledge_repository import KnowledgeRepository
 from app.schemas.knowledge_schema import KnowledgeResponse
 from app.services.file_parser_service import FileParserService
+from app.services.llm_service import LLMService
+from app.services.auth import get_current_user  # 🔐 ADD THIS
 
-router = APIRouter(prefix="/knowledge", tags=["Global Knowledge Base"])
+# 🔐 Protect ALL knowledge routes with JWT
+router = APIRouter(
+    prefix="/knowledge",
+    tags=["Global Knowledge Base"],
+    dependencies=[Depends(get_current_user)]  # 🔐 FULL AUTHORIZATION
+)
 
 UPLOAD_DIR = "uploads"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
@@ -28,7 +36,6 @@ async def upload_knowledge_file(
 
     file_ext = file.filename.split(".")[-1].lower()
 
-   
     if file_ext == "pdf":
         content = FileParserService.parse_pdf(file_path)
     elif file_ext == "docx":
@@ -51,6 +58,7 @@ async def upload_knowledge_file(
     return knowledge
 
 
+# 📚 GET ALL KNOWLEDGE
 @router.get("/", response_model=List[KnowledgeResponse])
 async def get_all_knowledge(
     db: AsyncSession = Depends(get_db),
@@ -58,6 +66,7 @@ async def get_all_knowledge(
     return await KnowledgeRepository.get_all(db)
 
 
+# 🗑 DELETE BY ID
 @router.delete("/{knowledge_id}")
 async def delete_knowledge(
     knowledge_id: str,
@@ -70,6 +79,8 @@ async def delete_knowledge(
 
     return {"message": "Knowledge deleted successfully"}
 
+
+# 🧨 DELETE ALL (Very Sensitive - Now Protected)
 @router.delete("/")
 async def delete_all_knowledge(
     db: AsyncSession = Depends(get_db),
@@ -78,8 +89,7 @@ async def delete_all_knowledge(
     return {"message": "All global knowledge deleted successfully"}
 
 
-from app.services.llm_service import LLMService
-
+# 🤖 TRUE GENERIC RAG SEARCH
 @router.get("/rag/search")
 async def rag_search(
     query: str,
@@ -94,7 +104,7 @@ async def rag_search(
     if not query:
         raise HTTPException(status_code=400, detail="Query is required")
 
-    # 1️⃣ Retrieve relevant chunks (vector search)
+    # 1️⃣ Vector Search
     results = await RAGService.semantic_search(db, query, limit=5)
 
     if not results:
@@ -103,10 +113,10 @@ async def rag_search(
             "answer": "No relevant information found in uploaded documents."
         }
 
-    # 2️⃣ Build context from top chunks
+    # 2️⃣ Build Context
     context = "\n\n".join([r["content"] for r in results])
 
-    # 3️⃣ 🔥 TRUE RAG: Generate final answer using LLM
+    # 3️⃣ LLM Final Answer (TRUE RAG)
     answer = LLMService.generate_answer(query, context)
 
     return {

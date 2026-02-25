@@ -8,9 +8,14 @@ from app.schemas.voice_schema import (
     AssistantConfigureCreate,
     AssistantConfigureResponse,
 )
+from app.services.auth import get_current_user  # 🔐 ADD THIS
 
-router = APIRouter(prefix="/assistants", tags=["Assistant Configure"])
-
+# 🔐 Protect ALL configure routes with JWT
+router = APIRouter(
+    prefix="/assistants",
+    tags=["Assistant Configure"],
+    dependencies=[Depends(get_current_user)]  # 🔐 FULL AUTHORIZATION
+)
 
 
 @router.post("/{assistant_id}/configure", response_model=AssistantConfigureResponse)
@@ -27,7 +32,6 @@ async def save_configure(
     if not assistant:
         raise HTTPException(status_code=404, detail="Assistant not found")
 
- 
     assistant.voice_name = data.voice_name
     assistant.elevenlabs_voice_id = data.elevenlabs_voice_id
     assistant.language = data.language
@@ -49,7 +53,6 @@ async def save_configure(
     )
 
 
-
 @router.get("/{assistant_id}/configure", response_model=AssistantConfigureResponse)
 async def get_configure(
     assistant_id: str,
@@ -63,7 +66,6 @@ async def get_configure(
     if not assistant:
         raise HTTPException(status_code=404, detail="Assistant not found")
 
-  
     return AssistantConfigureResponse(
         assistant_id=assistant.id,
         voice_name=assistant.voice_name,
@@ -73,7 +75,6 @@ async def get_configure(
         detect_caller_number=assistant.detect_caller_number,
         multilingual_support=assistant.multilingual_support,
     )
-
 
 
 @router.delete("/{assistant_id}/configure")

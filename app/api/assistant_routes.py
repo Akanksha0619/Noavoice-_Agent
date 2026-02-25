@@ -9,8 +9,14 @@ from app.schemas.assistant_schema import (
     AssistantResponse,
 )
 from app.services.assistant_service import AssistantService
+from app.services.auth import get_current_user  # 🔐 ADD THIS
 
-router = APIRouter(prefix="/agents", tags=["Agents"])
+# 🔐 Apply JWT auth to ALL routes in this router
+router = APIRouter(
+    prefix="/agents",
+    tags=["Agents"],
+    dependencies=[Depends(get_current_user)]  # 🔐 THIS LINE SECURES ALL ENDPOINTS
+)
 
 
 # CREATE Assistant
