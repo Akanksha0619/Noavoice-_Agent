@@ -80,48 +80,63 @@
 #             "profile_image": user.profile_image
 #         }
 #     }
-
 from fastapi import APIRouter, Request, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from app.config.database import get_db
 from app.integrations.google.oauth import oauth
 from app.services.auth import create_access_token
 from app.models.user import User
-from app.config.database import get_db
 
-router = APIRouter(prefix="/auth", tags=["OAuth Auth"])
+router = APIRouter(prefix="/auth", tags=["OAuth"])
 
 
+# 🔐 GOOGLE LOGIN (ONLY ONE ROUTE - NO DUPLICATE)
 @router.get("/google")
 async def google_login(request: Request):
-    redirect_uri = "https://noavoice-agent.onrender.com/auth/google/callback"
+    # 🔥 Dynamic redirect (works for localhost + render both)
+    redirect_uri = str(request.url_for("google_callback"))
     return await oauth.google.authorize_redirect(request, redirect_uri)
 
 
-@router.get("/google/callback")
+# 🔁 GOOGLE CALLBACK (MUST HAVE NAME)
+@router.get("/google/callback", name="google_callback")
 async def google_callback(
     request: Request,
     db: AsyncSession = Depends(get_db)
 ):
     try:
-        # 🔥 Step 1: Get token from Google
+        # 1️⃣ Exchange code for token
         token = await oauth.google.authorize_access_token(request)
+
+        if not token:
+            raise HTTPException(status_code=400, detail="Failed to get token from Google")
+
+        # 2️⃣ Get user info safely
         user_info = token.get("userinfo")
 
+        # Fallback if userinfo not auto included
         if not user_info:
-            raise HTTPException(status_code=400, detail="Google user info not found")
+            resp = await oauth.google.get(
+                "https://www.googleapis.com/oauth2/v1/userinfo",
+                token=token
+            )
+            user_info = resp.json()
+
+        if not user_info or "email" not in user_info:
+            raise HTTPException(status_code=400, detail="Failed to fetch user info")
 
         email = user_info["email"]
         name = user_info.get("name")
         picture = user_info.get("picture")
 
-        # 🔥 Step 2: Check user in DB
+        # 3️⃣ Check existing user
         result = await db.execute(
             select(User).where(User.email == email)
         )
         user = result.scalar_one_or_none()
 
-        # 🔥 Step 3: Create user if not exists
+        # 4️⃣ Create new user if not exists
         if not user:
             user = User(
                 email=email,
@@ -133,7 +148,7 @@ async def google_callback(
             await db.commit()
             await db.refresh(user)
 
-        # 🔥 Step 4: Create JWT Token (IMPORTANT)
+        # 5️⃣ Generate JWT token
         access_token = create_access_token(
             data={
                 "user_id": str(user.id),
@@ -141,9 +156,9 @@ async def google_callback(
             }
         )
 
-        # 🔥 Step 5: Return JSON (No internal API calls)
+        # 6️⃣ Final response (Frontend can store token)
         return {
-            "message": "Google login successful",
+            "message": "Login successful",
             "access_token": access_token,
             "token_type": "bearer",
             "user": {
@@ -155,5 +170,6 @@ async def google_callback(
         }
 
     except Exception as e:
-        # 🔥 This will show real error instead of blank page
-        raise HTTPException(status_code=500, detail=str(e))
+        import traceback
+        traceback.print_exc()  # 🔥 Important for Render logs
+        raise HTTPException(status_code=500, detail=f"OAuth Error: {str(e)}")

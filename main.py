@@ -11,12 +11,13 @@ from app.models.base import Base
 
 app = FastAPI(title="NoaVoice Assistant API")
 
-# Session middleware (for Google OAuth)
+
 app.add_middleware(
     SessionMiddleware,
-    secret_key=settings.SECRET_KEY
-)
-
+    secret_key=settings.SECRET_KEY,
+    same_site="none",      
+    https_only=True    
+            )
 
 @app.get("/")
 async def root():
