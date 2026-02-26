@@ -20,7 +20,7 @@ class Settings(BaseSettings):
     GOOGLE_REDIRECT_URI: str | None = None
 
     # ===== OPTIONAL SERVICES =====
-    ELEVENLABS_API_KEY: str | None = None
+    ELEVENLABS_API_KEY: str
     CAL_COM_API_KEY: str | None = None
     EVENT_TYPE_ID: str | None = None
     CAL_API_BASE_URL: str | None = None
