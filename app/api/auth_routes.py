@@ -27,8 +27,9 @@ def create_access_token(data: dict):
 # ================= GOOGLE LOGIN =================
 @router.get("/google")
 async def google_login(request: Request):
+    print("Attempting Google login...")
     redirect_uri = str(request.url_for("google_callback"))
-    return await oauth.google.authorize_redirect(request, redirect_uri)
+    return await oauth.google.authorize_redirect(request, "http://localhost:3000/agents")
 
 
 # ================= GOOGLE CALLBACK =================
@@ -42,7 +43,7 @@ async def google_callback(
         token = await oauth.google.authorize_access_token(request)
         if not token:
             raise HTTPException(status_code=400, detail="Failed to get Google token")
-
+        print("Google token obtained:", token)  # Debugging statement
         # 2️⃣ Get user info
         user_info = token.get("userinfo")
 
