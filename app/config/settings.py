@@ -17,7 +17,7 @@ class Settings(BaseSettings):
     # ===== GOOGLE OAUTH =====
     GOOGLE_CLIENT_ID: str
     GOOGLE_CLIENT_SECRET: str
-    GOOGLE_REDIRECT_URI: str
+    GOOGLE_REDIRECT_URI: str | None = None
 
     # ===== OPTIONAL SERVICES =====
     ELEVENLABS_API_KEY: str | None = None
