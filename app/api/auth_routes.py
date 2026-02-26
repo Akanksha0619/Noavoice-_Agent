@@ -29,7 +29,7 @@ def create_access_token(data: dict):
 async def google_login(request: Request):
     print("Attempting Google login...")
     redirect_uri = str(request.url_for("google_callback"))
-    return await oauth.google.authorize_redirect(request, "http://localhost:3000/agents")
+    return await oauth.google.authorize_redirect(request, "http://localhost:3000/auth/callback?token={access_token}")
 
 
 # ================= GOOGLE CALLBACK =================
