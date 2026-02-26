@@ -15,9 +15,10 @@ app = FastAPI(title="NoaVoice Assistant API")
 app.add_middleware(
     SessionMiddleware,
     secret_key=settings.SECRET_KEY,
-    same_site="none",      
-    https_only=True    
-            )
+    session_cookie="noavoice_session",  
+    same_site="none",                   
+    https_only=True                     
+)
 
 @app.get("/")
 async def root():
@@ -29,8 +30,8 @@ async def on_startup():
         await conn.run_sync(Base.metadata.create_all)
 
 # Routers
-app.include_router(auth_router)          
-app.include_router(assistant_router)     
-app.include_router(assistant_prompt_router)  
-app.include_router(knowledge_router)     
-app.include_router(configure_router)     
+app.include_router(auth_router)
+app.include_router(assistant_router)
+app.include_router(assistant_prompt_router)
+app.include_router(knowledge_router)
+app.include_router(configure_router)

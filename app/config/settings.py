@@ -1,53 +1,35 @@
-from pydantic_settings import BaseSettings
-from pydantic import Field
-from functools import lru_cache
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
 class Settings(BaseSettings):
-    # App
+    # ===== APP =====
     APP_NAME: str = "NoaVoiceAI"
-    DEBUG: bool = False
-
-     # Existing configs
-    DATABASE_URL: str
-
-    # 🔥 ADD THIS (VERY IMPORTANT)
-    OPENAI_API_KEY: str 
-
-    class Config:
-        env_file = ".env"
-        extra = "ignore"  # 🔥 THIS LINE FIXES YOUR CRASH
-    
-    # Cal.com V2
-    CALCOM_API_KEY: str | None = None 
-    CALCOM_EVENT_TYPE_ID: int | None = None 
-    CALCOM_BASE_URL: str = "https://api.cal.com/v2"
-    CALCOM_API_VERSION: str = "2024-08-13"
-    
-    # Neon PostgreSQL
-    DATABASE_URL: str
-
-    # 🔊 ElevenLabs
-    ELEVENLABS_API_KEY: str
-    ELEVENLABS_MODEL_ID: str = "eleven_multilingual_v2"
-
-
-    GOOGLE_CLIENT_ID: str
-    GOOGLE_CLIENT_SECRET: str
-    GOOGLE_REDIRECT_URI: str | None = None
+    DEBUG: bool = True  # 🔥 ADD THIS (fixes your crash)
     SECRET_KEY: str
     ALGORITHM: str = "HS256"
 
+    # ===== DATABASE =====
+    DATABASE_URL: str
 
+    # ===== OPENAI =====
+    OPENAI_API_KEY: str
 
-    class Config:
-        env_file = ".env"
-        case_sensitive = True
+    # ===== GOOGLE OAUTH =====
+    GOOGLE_CLIENT_ID: str
+    GOOGLE_CLIENT_SECRET: str
+    GOOGLE_REDIRECT_URI: str
+
+    # ===== OPTIONAL SERVICES =====
+    ELEVENLABS_API_KEY: str | None = None
+    CAL_COM_API_KEY: str | None = None
+    EVENT_TYPE_ID: str | None = None
+    CAL_API_BASE_URL: str | None = None
+    CAL_API_VERSION: str | None = None
+
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        extra="allow"  # prevent extra env crash
+    )
+
 
 settings = Settings()
-
-@lru_cache(maxsize=1)
-def get_settings() -> Settings:
-    """
-    Returns a cached Settings instance.
-    Import and call get_settings() anywhere in the app.
-    """
-    return Settings()
