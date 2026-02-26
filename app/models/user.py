@@ -6,7 +6,7 @@ from app.models.base import Base
 class User(Base):
     __tablename__ = "client_users"
 
-    id = Column(Integer, primary_key=True, index=True)  # 
+    id = Column(Integer, primary_key=True, index=True)
     email = Column(String(255), unique=True, index=True, nullable=False)
     name = Column(String(255), nullable=True)
     auth_provider = Column(String(50), default="google")

@@ -10,19 +10,19 @@ from app.repository.knowledge_repository import KnowledgeRepository
 from app.schemas.knowledge_schema import KnowledgeResponse
 from app.services.file_parser_service import FileParserService
 from app.services.llm_service import LLMService
-from app.services.auth import get_current_user  
+from app.services.auth import get_current_user  # 🔥 CORRECT IMPORT
 
 router = APIRouter(
     prefix="/knowledge",
     tags=["Global Knowledge Base"],
-    dependencies=[Depends(get_current_user)]  
+    dependencies=[Depends(get_current_user)]  # 🔐 FIXED AUTH
 )
 
 UPLOAD_DIR = "uploads"
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 
-# 🌍 UPLOAD FILE (GLOBAL KB - PDF/DOCX/TXT)
+# 🌍 UPLOAD FILE (PROTECTED)
 @router.post("/upload", response_model=KnowledgeResponse)
 async def upload_knowledge_file(
     file: UploadFile = File(...),
@@ -57,7 +57,7 @@ async def upload_knowledge_file(
     return knowledge
 
 
-# 📚 GET ALL KNOWLEDGE
+# 📚 GET ALL KNOWLEDGE (PROTECTED)
 @router.get("/", response_model=List[KnowledgeResponse])
 async def get_all_knowledge(
     db: AsyncSession = Depends(get_db),
@@ -65,7 +65,7 @@ async def get_all_knowledge(
     return await KnowledgeRepository.get_all(db)
 
 
-# 🗑 DELETE BY ID
+# 🗑 DELETE BY ID (PROTECTED)
 @router.delete("/{knowledge_id}")
 async def delete_knowledge(
     knowledge_id: str,
@@ -79,7 +79,7 @@ async def delete_knowledge(
     return {"message": "Knowledge deleted successfully"}
 
 
-# 🧨 DELETE ALL (Very Sensitive - Now Protected)
+# 🧨 DELETE ALL (HIGHLY SENSITIVE - PROTECTED)
 @router.delete("/")
 async def delete_all_knowledge(
     db: AsyncSession = Depends(get_db),
@@ -88,18 +88,12 @@ async def delete_all_knowledge(
     return {"message": "All global knowledge deleted successfully"}
 
 
-# 🤖 TRUE GENERIC RAG SEARCH
+# 🤖 TRUE GENERIC RAG SEARCH (PROTECTED)
 @router.get("/rag/search")
 async def rag_search(
     query: str,
     db: AsyncSession = Depends(get_db),
 ):
-    """
-    TRUE GENERIC RAG:
-    - Works with ANY uploaded file
-    - Returns intelligent answers (not raw chunks)
-    """
-
     if not query:
         raise HTTPException(status_code=400, detail="Query is required")
 

@@ -1,102 +1,110 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
 
 from app.config.database import get_db
-from app.models.assistant import Assistant
+from app.repository.assistant_repository import AssistantRepository
 from app.schemas.voice_schema import (
-    AssistantConfigureCreate,
+    AssistantConfigureUpdate,
     AssistantConfigureResponse,
 )
-from app.services.auth import get_current_user  
+from app.services.auth import get_current_user
 
 
 router = APIRouter(
     prefix="/assistants",
-    tags=["Assistant Configure"],
-    dependencies=[Depends(get_current_user)]  
+    tags=["Assistant Configure"]
 )
 
 
-@router.post("/{assistant_id}/configure", response_model=AssistantConfigureResponse)
-async def save_configure(
+# ==============================
+# GET CONFIGURE (Can be Public or Protected as needed)
+# ==============================
+@router.get("/{assistant_id}/configure", response_model=AssistantConfigureResponse)
+async def get_assistant_configure(
     assistant_id: str,
-    data: AssistantConfigureCreate,
     db: AsyncSession = Depends(get_db),
 ):
-    result = await db.execute(
-        select(Assistant).where(Assistant.id == assistant_id)
-    )
-    assistant = result.scalar_one_or_none()
+    assistant = await AssistantRepository.get_by_id(db, assistant_id)
 
     if not assistant:
         raise HTTPException(status_code=404, detail="Assistant not found")
 
-    assistant.voice_name = data.voice_name
-    assistant.elevenlabs_voice_id = data.elevenlabs_voice_id
-    assistant.language = data.language
-    assistant.timezone = data.timezone
-    assistant.detect_caller_number = data.detect_caller_number
-    assistant.multilingual_support = data.multilingual_support
+    return AssistantConfigureResponse(
+        assistant_id=assistant.id,
+        agent_role=assistant.agent_role,
+        voice_name=assistant.voice_name,
+        elevenlabs_voice_id=assistant.elevenlabs_voice_id,
+        voice_provider=assistant.voice_provider,
+        language=assistant.language,
+        timezone=assistant.timezone,
+        detect_caller_number=assistant.detect_caller_number,
+        multilingual_support=assistant.multilingual_support,
+        voice_recording=assistant.voice_recording,
+    )
+
+
+# ==============================
+# SAVE / UPDATE CONFIGURE (PROTECTED)
+# ==============================
+@router.put("/{assistant_id}/configure", response_model=AssistantConfigureResponse)
+async def update_assistant_configure(
+    assistant_id: str,
+    data: AssistantConfigureUpdate,
+    db: AsyncSession = Depends(get_db),
+    current_user=Depends(get_current_user),  # 🔐 AUTH HERE
+):
+    assistant = await AssistantRepository.get_by_id(db, assistant_id)
+
+    if not assistant:
+        raise HTTPException(status_code=404, detail="Assistant not found")
+
+    update_data = data.dict(exclude_unset=True)
+
+    for key, value in update_data.items():
+        if value is not None:
+            setattr(assistant, key, value)
 
     await db.commit()
     await db.refresh(assistant)
 
     return AssistantConfigureResponse(
         assistant_id=assistant.id,
+        agent_role=assistant.agent_role,
         voice_name=assistant.voice_name,
         elevenlabs_voice_id=assistant.elevenlabs_voice_id,
+        voice_provider=assistant.voice_provider,
         language=assistant.language,
         timezone=assistant.timezone,
         detect_caller_number=assistant.detect_caller_number,
         multilingual_support=assistant.multilingual_support,
+        voice_recording=assistant.voice_recording,
     )
 
 
-@router.get("/{assistant_id}/configure", response_model=AssistantConfigureResponse)
-async def get_configure(
-    assistant_id: str,
-    db: AsyncSession = Depends(get_db),
-):
-    result = await db.execute(
-        select(Assistant).where(Assistant.id == assistant_id)
-    )
-    assistant = result.scalar_one_or_none()
-
-    if not assistant:
-        raise HTTPException(status_code=404, detail="Assistant not found")
-
-    return AssistantConfigureResponse(
-        assistant_id=assistant.id,
-        voice_name=assistant.voice_name,
-        elevenlabs_voice_id=assistant.elevenlabs_voice_id,
-        language=assistant.language,
-        timezone=assistant.timezone,
-        detect_caller_number=assistant.detect_caller_number,
-        multilingual_support=assistant.multilingual_support,
-    )
-
-
+# ==============================
+# RESET CONFIGURE (PROTECTED)
+# ==============================
 @router.delete("/{assistant_id}/configure")
-async def reset_configure(
+async def reset_assistant_configure(
     assistant_id: str,
     db: AsyncSession = Depends(get_db),
+    current_user=Depends(get_current_user),  # 🔐 AUTH HERE
 ):
-    result = await db.execute(
-        select(Assistant).where(Assistant.id == assistant_id)
-    )
-    assistant = result.scalar_one_or_none()
+    assistant = await AssistantRepository.get_by_id(db, assistant_id)
 
     if not assistant:
         raise HTTPException(status_code=404, detail="Assistant not found")
 
+    assistant.agent_role = None
     assistant.voice_name = None
     assistant.elevenlabs_voice_id = None
+    assistant.voice_provider = "elevenlabs"
     assistant.language = "English"
     assistant.timezone = None
     assistant.detect_caller_number = False
     assistant.multilingual_support = False
+    assistant.voice_recording = False
 
     await db.commit()
 
-    return {"message": "Configure reset successfully"}
+    return {"message": "Assistant configuration reset successfully"}

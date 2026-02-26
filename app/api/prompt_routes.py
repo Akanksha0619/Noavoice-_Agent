@@ -8,19 +8,19 @@ from app.schemas.assistant_prompt_schema import (
     AssistantPromptResponse,
 )
 from app.services.assistant_service import AssistantService
-from app.services.auth import get_current_user  
+from app.services.auth import get_current_user  # 🔥 CORRECT AUTH
 
 
 router = APIRouter(
     prefix="/agents",
     tags=["Assistant Prompt"],
-    dependencies=[Depends(get_current_user)]  
+    dependencies=[Depends(get_current_user)]  # 🔐 FIXED (NOT create_access_token)
 )
 
 
-# CREATE / UPDATE Prompt
+# CREATE / UPDATE Prompt (PROTECTED)
 @router.post(
-    "/{agent_id}/prompt",
+    "/create_prompt/{agent_id}",
     response_model=AssistantPromptResponse,
     status_code=status.HTTP_200_OK,
 )
@@ -49,9 +49,9 @@ async def create_or_update_prompt(
     )
 
 
-# GET Prompt
+# GET Prompt (PROTECTED)
 @router.get(
-    "/{agent_id}/prompt",
+    "/get_prompt/{agent_id}",
     response_model=AssistantPromptResponse,
 )
 async def get_prompt(
@@ -74,9 +74,9 @@ async def get_prompt(
     )
 
 
-# DELETE Prompt (Reset Prompt)
+# DELETE Prompt (Reset Prompt) (PROTECTED)
 @router.delete(
-    "/{agent_id}/prompt",
+    "/delete_prompt/{agent_id}",
     status_code=status.HTTP_200_OK,
 )
 async def delete_prompt(

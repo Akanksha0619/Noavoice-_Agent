@@ -1,5 +1,5 @@
 from sqlalchemy import Column, String, DateTime
-from sqlalchemy.orm import DeclarativeBase
+from sqlalchemy.orm import DeclarativeBase, declarative_base
 from sqlalchemy.sql import func
 import uuid
 
@@ -25,3 +25,13 @@ class BaseModel(Base):
         onupdate=func.now(),
         nullable=False
     )
+
+from sqlalchemy.orm import declarative_base
+from sqlalchemy import MetaData
+
+# 🔥 THIS LINE FOR CUSTOM SCHEMA
+SCHEMA_NAME = "noavoice_am"
+
+metadata = MetaData(schema=SCHEMA_NAME)
+
+Base = declarative_base(metadata=metadata)
