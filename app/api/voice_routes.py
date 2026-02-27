@@ -47,8 +47,7 @@ async def get_voice_config(
 
 
 # =====================================
-# 2️⃣ ADD + UPDATE VOICE (SAVE BUTTON)
-# SAME ROUTE FOR BOTH (IMPORTANT)
+# 2️⃣ ADD + UPDATE VOICE CONFIG (SAVE BUTTON)
 # =====================================
 @router.put("/{assistant_id}/configure", response_model=AssistantConfigureResponse)
 async def add_or_update_voice_config(
@@ -56,13 +55,6 @@ async def add_or_update_voice_config(
     data: AssistantConfigureUpdate,
     db: AsyncSession = Depends(get_db),
 ):
-    """
-    This single API will:
-    - Add voice (first time)
-    - Update voice (change voice later)
-    - Save full configure settings (like NoaVoice UI)
-    """
-
     assistant = await AssistantRepository.get_by_id(db, assistant_id)
 
     if not assistant:
@@ -70,7 +62,7 @@ async def add_or_update_voice_config(
 
     update_data = data.dict(exclude_unset=True)
 
-    # Smart update (no null overwrite)
+    # Smart update (avoid overwriting with None)
     for key, value in update_data.items():
         if value is not None:
             setattr(assistant, key, value)
@@ -97,6 +89,12 @@ async def add_or_update_voice_config(
 # ==============================
 @router.get("/elevenlabs")
 async def get_elevenlabs_voices():
+    if not settings.ELEVENLABS_API_KEY:
+        raise HTTPException(
+            status_code=500,
+            detail="ElevenLabs API key is not configured"
+        )
+
     url = "https://api.elevenlabs.io/v1/voices"
 
     headers = {
@@ -107,14 +105,17 @@ async def get_elevenlabs_voices():
         response = await client.get(url, headers=headers)
 
     if response.status_code != 200:
-        raise HTTPException(status_code=500, detail=response.text)
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to fetch voices: {response.text}"
+        )
 
     data = response.json()
 
     voices = [
         {
             "label": v["name"],
-            "value": v["voice_id"],
+            "value": v["voice_id"],  # IMPORTANT: This is the real ElevenLabs voice_id
             "category": v.get("category"),
             "preview_url": v.get("preview_url"),
         }
@@ -125,17 +126,41 @@ async def get_elevenlabs_voices():
 
 
 # ==============================
-# 4️⃣ TEST VOICE (🔊 PLAY BUTTON)
+# 4️⃣ TEST VOICE (🔊 PLAY BUTTON) - FIXED
 # ==============================
-@router.api_route("/test", methods=["GET", "POST"])
+@router.get("/test/{assistant_id}")
 async def test_voice(
-    voice_id: str,
-    text: str = "Hello, this is a test voice from NovaVoice AI assistant."
+    assistant_id: str,
+    text: str = Query(default="Hello, this is a test voice from NovaVoice AI assistant."),
+    db: AsyncSession = Depends(get_db),
 ):
+    # Debug (remove later)
+    print("API KEY:", settings.ELEVENLABS_API_KEY)
+
+    assistant = await AssistantRepository.get_by_id(db, assistant_id)
+
+    if not assistant:
+        raise HTTPException(status_code=404, detail="Assistant not found")
+
+    if not assistant.elevenlabs_voice_id:
+        raise HTTPException(
+            status_code=400,
+            detail="ElevenLabs voice not configured"
+        )
+
+    api_key = settings.ELEVENLABS_API_KEY
+    if not api_key:
+        raise HTTPException(
+            status_code=500,
+            detail="ELEVENLABS_API_KEY missing in .env"
+        )
+
+    voice_id = assistant.elevenlabs_voice_id
+
     url = f"https://api.elevenlabs.io/v1/text-to-speech/{voice_id}"
 
     headers = {
-        "xi-api-key": settings.ELEVENLABS_API_KEY,
+        "xi-api-key": str(api_key).strip(),
         "Content-Type": "application/json",
         "Accept": "audio/mpeg"
     }
@@ -148,13 +173,20 @@ async def test_voice(
     async with httpx.AsyncClient(timeout=60.0) as client:
         response = await client.post(url, json=payload, headers=headers)
 
-    if response.status_code != 200:
-        raise HTTPException(status_code=500, detail=response.text)
+    if response.status_code == 401:
+        raise HTTPException(
+            status_code=401,
+            detail="Unauthorized: Invalid ElevenLabs API Key"
+        )
 
-    audio_stream = io.BytesIO(response.content)
+    if response.status_code != 200:
+        raise HTTPException(
+            status_code=500,
+            detail=f"ElevenLabs Error: {response.text}"
+        )
 
     return StreamingResponse(
-        audio_stream,
+        io.BytesIO(response.content),
         media_type="audio/mpeg",
         headers={"Content-Disposition": "inline; filename=voice_test.mp3"}
     )
