@@ -10,7 +10,8 @@ from app.repository.knowledge_repository import KnowledgeRepository
 from app.schemas.knowledge_schema import KnowledgeResponse
 from app.services.file_parser_service import FileParserService
 from app.services.llm_service import LLMService
-from app.services.auth import get_current_user  # 🔥 CORRECT IMPORT
+from app.services.knowledge_service import KnowledgeService
+from app.services.auth import get_current_user 
 
 router = APIRouter(
     prefix="/knowledge",
@@ -116,3 +117,8 @@ async def rag_search(
         "query": query,
         "answer": answer
     }
+
+@router.get("/stats")
+async def get_knowledge_stats(db: AsyncSession = Depends(get_db)):
+    return await KnowledgeService.get_knowledge_stats(db)
+
